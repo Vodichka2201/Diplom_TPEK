@@ -277,7 +277,7 @@ class MigrationApp:
         
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
+            cursor = conn.cursor(buffered=True)
             
             saved = 0
             skipped = 0
