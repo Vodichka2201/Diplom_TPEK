@@ -1,0 +1,98 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Страница-1" id="k02ED5vhdMeUS33rnqF-">
+    <mxGraphModel dx="975" dy="541" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="WVGRme_Pauom0hdGf1ol-11" edge="1" parent="1" source="WVGRme_Pauom0hdGf1ol-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="WVGRme_Pauom0hdGf1ol-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;" value="начало" vertex="1">
+          <mxGeometry height="60" width="120" x="250" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-13" edge="1" parent="1" source="WVGRme_Pauom0hdGf1ol-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="WVGRme_Pauom0hdGf1ol-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Выбор Excel-файла" vertex="1">
+          <mxGeometry height="60" width="120" x="250" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-18" edge="1" parent="1" source="WVGRme_Pauom0hdGf1ol-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="WVGRme_Pauom0hdGf1ol-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Загрузка и отображение данных" vertex="1">
+          <mxGeometry height="60" width="120" x="250" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-19" edge="1" parent="1" source="WVGRme_Pauom0hdGf1ol-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="WVGRme_Pauom0hdGf1ol-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Сопоставление учебных заведений" vertex="1">
+          <mxGeometry height="60" width="120" x="250" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-22" edge="1" parent="1" source="WVGRme_Pauom0hdGf1ol-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="WVGRme_Pauom0hdGf1ol-7" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Просмотр и корректировка результатов" vertex="1">
+          <mxGeometry height="60" width="120" x="250" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-23" edge="1" parent="1" source="WVGRme_Pauom0hdGf1ol-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="WVGRme_Pauom0hdGf1ol-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="745" />
+              <mxPoint x="420" y="650" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-25" edge="1" parent="1" source="WVGRme_Pauom0hdGf1ol-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="WVGRme_Pauom0hdGf1ol-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-7" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="Всё сопоставлено?" vertex="1">
+          <mxGeometry height="90" width="130" x="245" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-21" edge="1" parent="1" source="WVGRme_Pauom0hdGf1ol-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="WVGRme_Pauom0hdGf1ol-10" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-8" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Сохранение в БД" vertex="1">
+          <mxGeometry height="60" width="120" x="250" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;" value="конец" vertex="1">
+          <mxGeometry height="60" width="120" x="414" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-14" edge="1" parent="1" source="WVGRme_Pauom0hdGf1ol-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="WVGRme_Pauom0hdGf1ol-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="355" />
+              <mxPoint x="460" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-15" edge="1" parent="1" source="WVGRme_Pauom0hdGf1ol-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="WVGRme_Pauom0hdGf1ol-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-12" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="Правильный файл?" vertex="1">
+          <mxGeometry height="90" width="130" x="245" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-16" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Да" vertex="1">
+          <mxGeometry height="30" width="60" x="300" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-17" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Нет" vertex="1">
+          <mxGeometry height="30" width="60" x="375" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-24" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Да" vertex="1">
+          <mxGeometry height="30" width="60" x="300" y="785" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-26" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Нет" vertex="1">
+          <mxGeometry height="30" width="60" x="360" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-27" edge="1" parent="1" source="WVGRme_Pauom0hdGf1ol-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="WVGRme_Pauom0hdGf1ol-9" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="850" as="sourcePoint" />
+            <mxPoint x="670" y="610" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WVGRme_Pauom0hdGf1ol-9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Отчёт о результатах" vertex="1">
+          <mxGeometry height="60" width="120" x="414" y="820" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
