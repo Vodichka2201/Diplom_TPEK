@@ -164,22 +164,30 @@ class MigrationApp:
             ws = wb.active
             
             self.excel_data = []
-            for row in ws.iter_rows(min_row=2, values_only=True):  # пропускаем заголовок
+            for row in ws.iter_rows(min_row=2, values_only=True):
                 if row[0] is None:
                     continue
-                # Предполагаем: Фамилия, Имя, Отчество, Дата рождения, Школа
+                # Фамилия, Имя, Отчество, Дата рождения, Пол, Телефон, Школа, Серия аттестата, Средний балл
                 surname = str(row[0]) if row[0] else ""
                 name = str(row[1]) if row[1] else ""
                 patronymic = str(row[2]) if len(row) > 2 and row[2] else ""
                 birth_date = str(row[3]) if len(row) > 3 and row[3] else ""
-                school = str(row[4]) if len(row) > 4 and row[4] else ""
+                gender = str(row[4]) if len(row) > 4 and row[4] else "мужской"
+                phone = str(row[5]) if len(row) > 5 and row[5] else ""
+                school = str(row[6]) if len(row) > 6 and row[6] else ""
+                cert_serial = str(row[7]) if len(row) > 7 and row[7] else ""
+                avg_score = row[8] if len(row) > 8 and row[8] else None
                 
                 self.excel_data.append({
                     'surname': surname,
                     'name': name,
                     'patronymic': patronymic,
                     'birth_date': birth_date,
-                    'school': school
+                    'gender': gender,
+                    'phone': phone,
+                    'school': school,
+                    'cert_serial': cert_serial,
+                    'avg_score': avg_score
                 })
             
             # Очищаем таблицу
@@ -259,7 +267,6 @@ class MigrationApp:
             messagebox.showwarning("Внимание", "Сначала выполните сопоставление.")
             return
         
-        # Подтверждение
         ok = messagebox.askyesno(
             "Подтверждение",
             "Сохранить результаты миграции в базу данных?\n\n"
@@ -282,32 +289,60 @@ class MigrationApp:
                 
                 school_id = match[0]
                 
-                # Вставка в people
-                cursor.execute("""
-                    INSERT IGNORE INTO people (surname, name, patronymic, birth_date, gender)
-                    VALUES (%s, %s, %s, %s, 'мужской')
-                """, (data['surname'], data['name'], data['patronymic'],
-                      data['birth_date'] if data['birth_date'] else None))
-                
-                # Получаем id человека
+                # Сначала проверяем, есть ли уже такой человек
                 cursor.execute("""
                     SELECT id FROM people
-                    WHERE surname = %s AND name = %s AND patronymic = %s AND birth_date = %s
-                """, (data['surname'], data['name'], data['patronymic'],
-                      data['birth_date'] if data['birth_date'] else None))
+                    WHERE surname = %s AND name = %s 
+                    AND (patronymic = %s OR (patronymic IS NULL AND %s IS NULL))
+                    AND birth_date = %s
+                """, (data['surname'], data['name'], 
+                    data['patronymic'], data['patronymic'],
+                    data['birth_date'] if data['birth_date'] else None))
                 
                 person_row = cursor.fetchone()
+                
                 if person_row:
+                    # Человек уже есть — используем его id
                     person_id = person_row[0]
-                    
-                    # Вставка в person_certificates
+                else:
+                    # Вставка нового человека
                     cursor.execute("""
-                        INSERT IGNORE INTO person_certificates
-                        (person_id, edu_certificate_id, certificate_type_of_education)
-                        VALUES (%s, %s, 'Аттестат')
-                    """, (person_id, school_id))
-                    
-                    saved += 1
+                        INSERT INTO people (surname, name, patronymic, birth_date, gender, phone)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (data['surname'], data['name'], data['patronymic'],
+                        data['birth_date'] if data['birth_date'] else None,
+                        data['gender'],
+                        data['phone'] if data['phone'] else None))
+                    person_id = cursor.lastrowid
+                
+                # Проверяем, есть ли уже такой сертификат
+                cursor.execute("""
+                    SELECT id FROM person_certificates
+                    WHERE person_id = %s AND edu_certificate_id = %s
+                """, (person_id, school_id))
+                
+                cert_row = cursor.fetchone()
+                
+                if cert_row:
+                    # Связь уже есть — пропускаем
+                    skipped += 1
+                    continue
+                
+                # Вставка в person_certificates
+                cursor.execute("""
+                    INSERT INTO person_certificates
+                    (person_id, edu_certificate_id, certificate_type_of_education,
+                    certificate_serial_number, certificate_date, average_score)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (
+                    person_id, school_id,
+                    'Аттестат о среднем общем образовании',
+                    data['cert_serial'] if data['cert_serial'] else None,
+                    data['birth_date'] if data['birth_date'] else None,
+                    data['avg_score'] if data['avg_score'] else None
+                ))
+                
+                saved += 1
             
             conn.commit()
             cursor.close()
@@ -320,7 +355,7 @@ class MigrationApp:
                 "Готово",
                 f"Результаты миграции сохранены в базу данных.\n\n"
                 f"Успешно сохранено: {saved}\n"
-                f"Пропущено (не найдено совпадений): {skipped}"
+                f"Пропущено (уже существуют): {skipped}"
             )
             
         except mysql.connector.Error as e:
