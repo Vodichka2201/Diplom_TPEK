@@ -156,11 +156,12 @@ class MigrationApp:
                     'is_adopted': int(row[27]) if row[27] else 0,
                     'specialization_id': int(row[29]) if len(row) > 29 and row[29] else None,
                     'grade': int(row[30]) if len(row) > 30 and row[30] else 9,
-                    'is_budget': int(row[31]) if len(row) > 31 and row[31] else 1,
-                    'is_full_time': int(row[32]) if len(row) > 32 and row[32] else 1,
+                    'is_budget': int(row[31]) if len(row) > 31 and row[31] is not None else 1,
+                    'is_full_time': int(row[32]) if len(row) > 32 and row[32] is not None else 1,
                     'specialization_code': str(row[33] or '') if len(row) > 33 else '',
                     'specialization_title': str(row[34] or '') if len(row) > 34 else '',
                 })
+                
 
             # Заполняем таблицу
             for item in self.tree.get_children():
@@ -176,6 +177,7 @@ class MigrationApp:
 
             self.status.config(text=f"Загружено {len(self.excel_data)} записей из файла: {filepath}")
             self.btn_save.config(state=tk.NORMAL)
+            
 
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось загрузить файл:\n{e}")
