@@ -1,10 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import mysql.connector
-import re
-from difflib import SequenceMatcher
 import openpyxl
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
 
@@ -19,138 +17,97 @@ DB_CONFIG = {
     'database': 'smartstudentdb_test'
 }
 
-# ==================== ФУНКЦИИ СОПОСТАВЛЕНИЯ ====================
-
-def extract_school_number(name):
-    match = re.search(r'(?:№|#|No\.?|школа)\s*(\d+)', name, re.IGNORECASE)
-    return match.group(1) if match else None
-
-def extract_city(name):
-    match = re.search(r'г\.?\s*([А-Яа-яЁё\-]+)', name, re.IGNORECASE)
-    return match.group(1) if match else None
-
-def clean_name(name):
-    name = name.lower().strip()
-    name = re.sub(r'[«»""]', '', name)
-    name = re.sub(r'\s+', ' ', name)
-    return name
-
-def find_best_match(cursor, dirty_name):
-    number = extract_school_number(dirty_name)
-    city = extract_city(dirty_name)
-    clean_dirty = clean_name(dirty_name)
-    
-    query = """
-        SELECT ec.id, ec.edu_org_full_name, ec.edu_org_short_name, r.name AS region
-        FROM educational_certificate ec
-        JOIN regions r ON ec.region_id = r.id
-        WHERE ec.status_name = 'Действующее'
-    """
-    params = []
-    
-    if number:
-        query += " AND (ec.edu_org_full_name LIKE %s OR ec.edu_org_short_name LIKE %s)"
-        params.extend([f'%{number}%', f'%{number}%'])
-    
-    if city:
-        query += " AND (ec.edu_org_address LIKE %s OR r.name LIKE %s)"
-        params.extend([f'%{city}%', f'%{city}%'])
-    
-    cursor.execute(query, params)
-    candidates = cursor.fetchall()
-    
-    if not candidates:
-        return None
-    
-    best_score = 0
-    best_match = None
-    
-    for school_id, full_name, short_name, region in candidates:
-        score_full = SequenceMatcher(None, clean_dirty, clean_name(full_name or '')).ratio()
-        score_short = SequenceMatcher(None, clean_dirty, clean_name(short_name or '')).ratio()
-        score = max(score_full, score_short)
-        
-        if city and city.lower() in (full_name + ' ' + (short_name or '') + ' ' + region).lower():
-            score += 0.1
-        
-        if score > best_score:
-            best_score = score
-            best_match = (school_id, full_name, short_name, region, score)
-    
-    return best_match
-
-
 # ==================== КЛАСС ПРИЛОЖЕНИЯ ====================
 
 class MigrationApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Миграция данных студентов колледжа")
-        self.root.geometry("1000x650")
+        self.root.geometry("1100x650")
         self.root.resizable(True, True)
-        
-        self.excel_data = []          # загруженные строки из Excel
-        self.match_results = []       # результаты сопоставления
+
+        self.excel_data = []
         self.db_connection = None
-        
+
         self.create_widgets()
-    
+
     def create_widgets(self):
-        # Заголовок
-        title = tk.Label(self.root, text="Миграция данных студентов",
+        title = tk.Label(self.root, text="Миграция данных студентов колледжа",
                          font=("Arial", 16, "bold"))
         title.pack(pady=10)
-        
-        # Фрейм с кнопками
+
         btn_frame = tk.Frame(self.root)
         btn_frame.pack(pady=5)
-        
+
         self.btn_load = tk.Button(btn_frame, text="1. Выбрать Excel-файл",
                                   command=self.load_excel, width=22, bg="#e0e0e0")
         self.btn_load.pack(side=tk.LEFT, padx=5)
-        
-        self.btn_match = tk.Button(btn_frame, text="2. Сопоставить учебные заведения",
-                                   command=self.match_schools, width=26, bg="#e0e0e0",
-                                   state=tk.DISABLED)
-        self.btn_match.pack(side=tk.LEFT, padx=5)
-        
-        self.btn_save = tk.Button(btn_frame, text="3. Сохранить в БД",
+
+        self.btn_save = tk.Button(btn_frame, text="2. Сохранить в БД",
                                   command=self.save_to_db, width=18, bg="#c8e6c9",
                                   state=tk.DISABLED)
         self.btn_save.pack(side=tk.LEFT, padx=5)
-        
-        # Таблица с данными
+
+        # Таблица
         table_frame = tk.Frame(self.root)
         table_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
-        
+
         columns = ("№", "Фамилия", "Имя", "Отчество", "Дата рождения",
-                   "Школа (из Excel)", "Сопоставленное заведение", "Совпадение, %")
-        
+                   "Пол", "Телефон", "Специальность", "Курс", "Бюджет/Платно")
+
         self.tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=20)
-        
-        # Настройка колонок
-        widths = [40, 120, 100, 120, 100, 200, 250, 100]
+
+        widths = [35, 100, 90, 100, 90, 70, 110, 160, 50, 90]
         for col, w in zip(columns, widths):
             self.tree.heading(col, text=col)
             self.tree.column(col, width=w)
-        
-        # Прокрутка
+
         scroll_y = ttk.Scrollbar(table_frame, orient=tk.VERTICAL, command=self.tree.yview)
         scroll_x = ttk.Scrollbar(table_frame, orient=tk.HORIZONTAL, command=self.tree.xview)
         self.tree.configure(yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set)
-        
+
         self.tree.grid(row=0, column=0, sticky="nsew")
         scroll_y.grid(row=0, column=1, sticky="ns")
         scroll_x.grid(row=1, column=0, sticky="ew")
-        
+
         table_frame.grid_rowconfigure(0, weight=1)
         table_frame.grid_columnconfigure(0, weight=1)
-        
-        # Статус-бар
+
         self.status = tk.Label(self.root, text="Готов к работе. Выберите Excel-файл.",
                                bd=1, relief=tk.SUNKEN, anchor=tk.W, font=("Arial", 10))
         self.status.pack(side=tk.BOTTOM, fill=tk.X)
-    
+
+    def parse_date(self, date_str):
+        """Пробует разные форматы даты, включая числовой формат Excel"""
+        if date_str is None:
+            return None
+        
+        # Если это уже datetime
+        if isinstance(date_str, datetime):
+            return date_str.strftime('%Y-%m-%d')
+        
+        date_str = str(date_str).strip()
+        if not date_str:
+            return None
+        
+        # Пробуем стандартные форматы
+        for fmt in ['%d.%m.%Y', '%Y-%m-%d', '%d.%m.%y', '%Y.%m.%d', '%d/%m/%Y']:
+            try:
+                return datetime.strptime(date_str, fmt).strftime('%Y-%m-%d')
+            except ValueError:
+                continue
+        
+        # Пробуем числовой формат Excel (дни от 1899-12-30)
+        try:
+            serial = int(date_str)
+            if serial > 0:
+                base_date = datetime(1899, 12, 30)
+                return (base_date + timedelta(days=serial)).strftime('%Y-%m-%d')
+        except (ValueError, OverflowError):
+            pass
+        
+        return None
+
     def load_excel(self):
         filepath = filedialog.askopenfilename(
             title="Выберите Excel-файл",
@@ -158,211 +115,276 @@ class MigrationApp:
         )
         if not filepath:
             return
-        
+
         try:
             wb = openpyxl.load_workbook(filepath)
             ws = wb.active
-            
+
             self.excel_data = []
             for row in ws.iter_rows(min_row=2, values_only=True):
                 if row[0] is None:
                     continue
-                # Фамилия, Имя, Отчество, Дата рождения, Пол, Телефон, Школа, Серия аттестата, Средний балл
-                surname = str(row[0]) if row[0] else ""
-                name = str(row[1]) if row[1] else ""
-                patronymic = str(row[2]) if len(row) > 2 and row[2] else ""
-                birth_date = str(row[3]) if len(row) > 3 and row[3] else ""
-                gender = str(row[4]) if len(row) > 4 and row[4] else "мужской"
-                phone = str(row[5]) if len(row) > 5 and row[5] else ""
-                school = str(row[6]) if len(row) > 6 and row[6] else ""
-                cert_serial = str(row[7]) if len(row) > 7 and row[7] else ""
-                avg_score = row[8] if len(row) > 8 and row[8] else None
-                
+
                 self.excel_data.append({
-                    'surname': surname,
-                    'name': name,
-                    'patronymic': patronymic,
-                    'birth_date': birth_date,
-                    'gender': gender,
-                    'phone': phone,
-                    'school': school,
-                    'cert_serial': cert_serial,
-                    'avg_score': avg_score
+                    'surname': str(row[0] or ''),
+                    'name': str(row[1] or ''),
+                    'patronymic': str(row[2] or ''),
+                    'birth_date': self.parse_date(row[3]),
+                    'gender': str(row[4] or 'мужской'),
+                    'social_status': str(row[5] or ''),
+                    'phone_number': str(row[6] or ''),
+                    'adress': str(row[7] or ''),
+                    'insurance_number': str(row[8] or ''),
+                    'date_of_insurance': self.parse_date(row[9]),
+                    'medical_policy': str(row[10] or ''),
+                    'date_of_medical_policy': self.parse_date(row[11]),
+                    'insurance_companie': str(row[12] or ''),
+                    'native_language': str(row[13] or ''),
+                    'nationality': str(row[14] or ''),
+                    'passport_series': str(row[15] or ''),
+                    'passport_number': str(row[16] or ''),
+                    'issuer': str(row[17] or ''),
+                    'issue_date': self.parse_date(row[18]),
+                    'subdivision_code': str(row[19] or ''),
+                    'place_of_birth': str(row[20] or ''),
+                    'place_adress': str(row[21] or ''),
+                    'citizenship': str(row[22] or ''),
+                    'type_of_education': str(row[23] or ''),
+                    'average_mark': float(str(row[24]).replace(',', '.')) if row[24] else None,
+                    'reception_id': int(row[25]) if row[25] else None,
+                    'reg_number': str(row[26] or ''),
+                    'is_adopted': int(row[27]) if row[27] else 0,
+                    'specialization_id': int(row[29]) if len(row) > 29 and row[29] else None,
+                    'grade': int(row[30]) if len(row) > 30 and row[30] else 9,
+                    'is_budget': int(row[31]) if len(row) > 31 and row[31] else 1,
+                    'is_full_time': int(row[32]) if len(row) > 32 and row[32] else 1,
+                    'specialization_code': str(row[33] or '') if len(row) > 33 else '',
+                    'specialization_title': str(row[34] or '') if len(row) > 34 else '',
                 })
-            
-            # Очищаем таблицу
+
+            # Заполняем таблицу
             for item in self.tree.get_children():
                 self.tree.delete(item)
-            
-            # Заполняем таблицу
             for i, data in enumerate(self.excel_data, 1):
                 self.tree.insert("", tk.END, values=(
                     i, data['surname'], data['name'], data['patronymic'],
-                    data['birth_date'], data['school'], "", ""
+                    data['birth_date'], data['gender'], data['phone_number'],
+                    data['specialization_code'] + ' ' + data['specialization_title'],
+                    data['grade'],
+                    'Бюджет' if data['is_budget'] == 1 else 'Платно'
                 ))
-            
+
             self.status.config(text=f"Загружено {len(self.excel_data)} записей из файла: {filepath}")
-            self.btn_match.config(state=tk.NORMAL)
-            self.match_results = []
-            
+            self.btn_save.config(state=tk.NORMAL)
+
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось загрузить файл:\n{e}")
-    
-    def match_schools(self):
+
+    def save_to_db(self):
         if not self.excel_data:
             messagebox.showwarning("Внимание", "Сначала загрузите Excel-файл.")
             return
-        
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            
-            self.match_results = []
-            
-            for data in self.excel_data:
-                school_name = data['school']
-                if not school_name:
-                    self.match_results.append(None)
-                    continue
-                
-                match = find_best_match(cursor, school_name)
-                self.match_results.append(match)
-            
-            cursor.close()
-            conn.close()
-            
-            # Обновляем таблицу
-            for item in self.tree.get_children():
-                self.tree.delete(item)
-            
-            matched_count = 0
-            for i, (data, match) in enumerate(zip(self.excel_data, self.match_results), 1):
-                if match:
-                    school_id, full_name, short_name, region, confidence = match
-                    matched_name = short_name or full_name
-                    confidence_str = f"{confidence * 100:.0f}%"
-                    matched_count += 1
-                else:
-                    matched_name = "НЕ НАЙДЕНО"
-                    confidence_str = "0%"
-                
-                self.tree.insert("", tk.END, values=(
-                    i, data['surname'], data['name'], data['patronymic'],
-                    data['birth_date'], data['school'], matched_name, confidence_str
-                ))
-            
-            self.status.config(
-                text=f"Сопоставление завершено. Найдено: {matched_count} из {len(self.excel_data)}. "
-                     f"Проверьте результаты перед сохранением."
-            )
-            self.btn_save.config(state=tk.NORMAL)
-            
-        except mysql.connector.Error as e:
-            messagebox.showerror("Ошибка БД", f"Не удалось подключиться к базе данных:\n{e}")
-        except Exception as e:
-            messagebox.showerror("Ошибка", f"Ошибка при сопоставлении:\n{e}")
-    
-    def save_to_db(self):
-        if not self.match_results:
-            messagebox.showwarning("Внимание", "Сначала выполните сопоставление.")
-            return
-        
+
         ok = messagebox.askyesno(
             "Подтверждение",
-            "Сохранить результаты миграции в базу данных?\n\n"
-            "Будут созданы записи в таблицах people и person_certificates."
+            f"Сохранить {len(self.excel_data)} записей в базу данных?\n\n"
+            "Данные будут записаны в таблицы:\n"
+            "- people (личные данные)\n"
+            "- person_extra_data (доп. сведения)\n"
+            "- passport_data (паспорт)\n"
+            "- person_insurance (СНИЛС, полис)\n"
+            "- person_certificates (образование)\n"
+            "- enrollments (поступление)"
         )
         if not ok:
             return
-        
+
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor(buffered=True)
-            
+            cursor = conn.cursor()
+
             saved = 0
             skipped = 0
-            
-            for data, match in zip(self.excel_data, self.match_results):
-                if match is None:
-                    skipped += 1
-                    continue
-                
-                school_id = match[0]
-                
-                # Сначала проверяем, есть ли уже такой человек
-                cursor.execute("""
-                    SELECT id FROM people
-                    WHERE surname = %s AND name = %s 
-                    AND (patronymic = %s OR (patronymic IS NULL AND %s IS NULL))
-                    AND birth_date = %s
-                """, (data['surname'], data['name'], 
-                    data['patronymic'], data['patronymic'],
-                    data['birth_date'] if data['birth_date'] else None))
-                
-                person_row = cursor.fetchone()
-                
-                if person_row:
-                    # Человек уже есть — используем его id
-                    person_id = person_row[0]
-                else:
-                    # Вставка нового человека
-                    cursor.execute("""
-                        INSERT INTO people (surname, name, patronymic, birth_date, gender, phone)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                    """, (data['surname'], data['name'], data['patronymic'],
-                        data['birth_date'] if data['birth_date'] else None,
-                        data['gender'],
-                        data['phone'] if data['phone'] else None))
-                    person_id = cursor.lastrowid
-                
-                # Проверяем, есть ли уже такой сертификат
-                cursor.execute("""
-                    SELECT id FROM person_certificates
-                    WHERE person_id = %s AND edu_certificate_id = %s
-                """, (person_id, school_id))
-                
-                cert_row = cursor.fetchone()
-                
-                if cert_row:
-                    # Связь уже есть — пропускаем
-                    skipped += 1
-                    continue
-                
-                # Вставка в person_certificates
-                cursor.execute("""
-                    INSERT INTO person_certificates
-                    (person_id, edu_certificate_id, certificate_type_of_education,
-                    certificate_serial_number, certificate_date, average_score)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, (
-                    person_id, school_id,
-                    'Аттестат о среднем общем образовании',
-                    data['cert_serial'] if data['cert_serial'] else None,
-                    data['birth_date'] if data['birth_date'] else None,
-                    data['avg_score'] if data['avg_score'] else None
-                ))
-                
-                saved += 1
-            
+            errors = 0
+
+            for data in self.excel_data:
+                try:
+                    person_id = self.insert_or_get_person(cursor, data)
+                    if not person_id:
+                        skipped += 1
+                        continue
+
+                    self.insert_person_extra_data(cursor, person_id, data)
+                    self.insert_passport_data(cursor, person_id, data)
+                    self.insert_person_insurance(cursor, person_id, data)
+                    self.insert_person_certificate(cursor, person_id, data)
+                    self.insert_enrollment(cursor, person_id, data)
+
+                    saved += 1
+                except Exception as e:
+                    errors += 1
+                    print(f"Ошибка в строке {data['surname']} {data['name']}: {e}")
+
             conn.commit()
             cursor.close()
             conn.close()
-            
+
             self.status.config(
-                text=f"Сохранение завершено. Сохранено: {saved}, пропущено: {skipped}."
+                text=f"Сохранение завершено. Сохранено: {saved}, пропущено: {skipped}, ошибок: {errors}."
             )
             messagebox.showinfo(
                 "Готово",
-                f"Результаты миграции сохранены в базу данных.\n\n"
+                f"Результаты миграции:\n\n"
                 f"Успешно сохранено: {saved}\n"
-                f"Пропущено (уже существуют): {skipped}"
+                f"Пропущено: {skipped}\n"
+                f"Ошибок: {errors}"
             )
-            
-        except mysql.connector.Error as e:
-            messagebox.showerror("Ошибка БД", f"Ошибка при сохранении:\n{e}")
-        except Exception as e:
-            messagebox.showerror("Ошибка", f"Ошибка:\n{e}")
 
+        except mysql.connector.Error as e:
+            messagebox.showerror("Ошибка БД", f"Ошибка подключения:\n{e}")
+            conn.rollback()
+
+    def insert_or_get_person(self, cursor, data):
+        birth_date = data['birth_date'] if data['birth_date'] else '2000-01-01'
+        
+        cursor.execute("""
+            SELECT id FROM people
+            WHERE surname = %s AND name = %s
+            AND (patronymic = %s OR (patronymic IS NULL AND %s IS NULL))
+            AND birth_date = %s
+        """, (data['surname'], data['name'], data['patronymic'], data['patronymic'], birth_date))
+
+        row = cursor.fetchone()
+        if row:
+            return row[0]
+
+        cursor.execute("""
+            INSERT INTO people (surname, name, patronymic, birth_date, gender, phone)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (data['surname'], data['name'], data['patronymic'],
+            birth_date, data['gender'],
+            data['phone_number'] if data['phone_number'] else None))
+        return cursor.lastrowid
+
+    def insert_person_extra_data(self, cursor, person_id, data):
+        cursor.execute("SELECT id FROM person_extra_data WHERE person_id = %s", (person_id,))
+        if cursor.fetchone():
+            return
+        cursor.execute("""
+            INSERT INTO person_extra_data (person_id, social_status, address, native_language, nationality)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (person_id,
+              data['social_status'] if data['social_status'] else None,
+              data['adress'] if data['adress'] else None,
+              data['native_language'] if data['native_language'] else None,
+              data['nationality'] if data['nationality'] else None))
+
+    def insert_passport_data(self, cursor, person_id, data):
+        cursor.execute("SELECT id FROM passport_data WHERE person_id = %s", (person_id,))
+        if cursor.fetchone():
+            return
+        cursor.execute("""
+            INSERT INTO passport_data (person_id, passport_series, passport_number, issuer,
+                                       issue_date, subdivision_code, place_of_birth, address, citizenship)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (person_id,
+              data['passport_series'] if data['passport_series'] else None,
+              data['passport_number'] if data['passport_number'] else None,
+              data['issuer'] if data['issuer'] else None,
+              data['issue_date'],
+              data['subdivision_code'] if data['subdivision_code'] else None,
+              data['place_of_birth'] if data['place_of_birth'] else None,
+              data['place_adress'] if data['place_adress'] else None,
+              data['citizenship'] if data['citizenship'] else None))
+
+    def insert_person_insurance(self, cursor, person_id, data):
+        cursor.execute("SELECT id FROM person_insurance WHERE person_id = %s", (person_id,))
+        if cursor.fetchone():
+            return
+        # Ищем страховую компанию в справочнике guides
+        insurance_company_id = None
+        if data['insurance_companie']:
+            cursor.execute("""
+                SELECT id FROM guides
+                WHERE text LIKE %s AND category_id IN (SELECT id FROM guide_categories WHERE name = 'страховая компания')
+                LIMIT 1
+            """, (f"%{data['insurance_companie']}%",))
+            row = cursor.fetchone()
+            if row:
+                insurance_company_id = row[0]
+
+        cursor.execute("""
+            INSERT INTO person_insurance (person_id, insurance_number, date_of_insurance,
+                                          medical_policy, date_of_medical_policy, insurance_companies_id)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (person_id,
+              data['insurance_number'] if data['insurance_number'] else None,
+              data['date_of_insurance'],
+              data['medical_policy'] if data['medical_policy'] else None,
+              data['date_of_medical_policy'],
+              insurance_company_id))
+
+    def insert_person_certificate(self, cursor, person_id, data):
+        cursor.execute("""
+            SELECT id FROM person_certificates
+            WHERE person_id = %s AND certificate_type_of_education = %s
+        """, (person_id, data['type_of_education'] if data['type_of_education'] else None))
+        if cursor.fetchone():
+            return
+        cursor.execute("""
+            INSERT INTO person_certificates (person_id, certificate_type_of_education, average_score)
+            VALUES (%s, %s, %s)
+        """, (person_id,
+              data['type_of_education'] if data['type_of_education'] else None,
+              data['average_mark']))
+
+    def insert_enrollment(self, cursor, person_id, data):
+        # Ищем specialization_id по коду из Excel
+        code = data.get('specialization_code', '')
+        cursor.execute("SELECT id FROM specializations WHERE code = %s", (code,))
+        row = cursor.fetchone()
+        if not row:
+            print(f"  Специальность с кодом '{code}' не найдена в БД")
+            return
+        spec_id = row[0]
+
+        grade = data.get('grade', 9)
+        is_budget = data.get('is_budget', 1)
+        is_full_time = data.get('is_full_time', 1)
+
+        # Ищем приёмную кампанию 2025 года
+        cursor.execute("""
+            SELECT id FROM receptions
+            WHERE specialization_id = %s 
+              AND grade = %s 
+              AND is_budget = %s
+              AND is_full_time = %s 
+              AND year = 2025
+            LIMIT 1
+        """, (spec_id, grade, is_budget, is_full_time))
+        row = cursor.fetchone()
+        if not row:
+            print(f"  Кампания не найдена: code={code}, spec_id={spec_id}, grade={grade}, is_budget={is_budget}, is_full_time={is_full_time}")
+            return
+        reception_id = row[0]
+
+        # Статус
+        status = 'зачислен' if data.get('is_adopted') == 1 else 'на рассмотрении'
+
+        # Проверка дубликата
+        cursor.execute("""
+            SELECT id FROM enrollments
+            WHERE reception_id = %s AND person_id = %s
+        """, (reception_id, person_id))
+        if cursor.fetchone():
+            return
+
+        cursor.execute("""
+            INSERT INTO enrollments (reception_id, person_id, reg_number, is_priority, status)
+            VALUES (%s, %s, %s, 0, %s)
+        """, (reception_id, person_id,
+              data.get('reg_number') if data.get('reg_number') else None,
+              status))
 
 # ==================== ЗАПУСК ====================
 
