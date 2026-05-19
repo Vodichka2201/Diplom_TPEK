@@ -1,0 +1,67 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Страница-1" id="zTVJZ1ki1I44Ua7GMIIJ">
+    <mxGraphModel dx="1414" dy="785" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-1" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="MigrationApp" vertex="1">
+          <mxGeometry height="476" width="420" x="120" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-2" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- root : Tk" vertex="1">
+          <mxGeometry height="26" width="420" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-5" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- excel_data : List" vertex="1">
+          <mxGeometry height="26" width="420" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-6" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- tree : Treeview" vertex="1">
+          <mxGeometry height="26" width="420" y="78" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-8" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- status : Label" vertex="1">
+          <mxGeometry height="26" width="420" y="104" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-9" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- btn_load : Button" vertex="1">
+          <mxGeometry height="26" width="420" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-10" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- btn_save : Button" vertex="1">
+          <mxGeometry height="26" width="420" y="156" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-3" parent="PPlA97OPpzzDVI-ET3sn-1" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="420" y="182" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-4" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="+ __init__(root : Tk) : None" vertex="1">
+          <mxGeometry height="26" width="420" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-11" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="+ create_widgets() : None" vertex="1">
+          <mxGeometry height="26" width="420" y="216" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-12" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="+ load_excel() : None" vertex="1">
+          <mxGeometry height="26" width="420" y="242" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-14" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="+ save_to_db() : None" vertex="1">
+          <mxGeometry height="26" width="420" y="268" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-13" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="+ parse_date(date_str : String) : String" vertex="1">
+          <mxGeometry height="26" width="420" y="294" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-15" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="+ insert_or_get_person(cursor, data : Dict) : Integer" vertex="1">
+          <mxGeometry height="26" width="420" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-16" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="+ insert_person_extra_data(cursor, person_id : Integer, data : Dict) : None" vertex="1">
+          <mxGeometry height="26" width="420" y="346" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-17" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="+ insert_passport_data(cursor, person_id : Integer, data : Dict) : None" vertex="1">
+          <mxGeometry height="26" width="420" y="372" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-18" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="+ insert_person_insurance(cursor, person_id : Integer, data : Dict) : None" vertex="1">
+          <mxGeometry height="26" width="420" y="398" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-19" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="+ insert_person_certificate(cursor, person_id : Integer, data : Dict) : None" vertex="1">
+          <mxGeometry height="26" width="420" y="424" as="geometry" />
+        </mxCell>
+        <mxCell id="PPlA97OPpzzDVI-ET3sn-20" parent="PPlA97OPpzzDVI-ET3sn-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="+ insert_enrollment(cursor, person_id : Integer, data : Dict) : None" vertex="1">
+          <mxGeometry height="26" width="420" y="450" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
