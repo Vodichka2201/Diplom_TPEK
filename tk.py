@@ -48,6 +48,10 @@ class MigrationApp:
                                   state=tk.DISABLED)
         self.btn_save.pack(side=tk.LEFT, padx=5)
 
+        self.btn_match = tk.Button(btn_frame, text="3. Привязать учебные заведения",
+                           command=self.open_match_window, width=26, bg="#fff9c4")
+        self.btn_match.pack(side=tk.LEFT, padx=5)
+
         # Таблица
         table_frame = tk.Frame(self.root)
         table_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
@@ -387,6 +391,246 @@ class MigrationApp:
         """, (reception_id, person_id,
               data.get('reg_number') if data.get('reg_number') else None,
               status))
+        
+    def open_match_window(self):
+        """Открывает окно привязки учебных заведений"""
+        match_win = tk.Toplevel(self.root)
+        match_win.title("Привязка учебных заведений")
+        match_win.geometry("1200x700")
+        
+        # ===== ЛЕВАЯ ЧАСТЬ =====
+        left_frame = tk.Frame(match_win)
+        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        tk.Label(left_frame, text="Студенты", font=("Arial", 12, "bold")).pack()
+        
+        # Фильтр по тексту
+        tk.Label(left_frame, text="Поиск по фамилии/имени:").pack()
+        self.filter_entry = tk.Entry(left_frame, width=30)
+        self.filter_entry.pack(pady=2)
+        self.filter_entry.bind("<KeyRelease>", lambda e: self.refresh_students())
+        
+        # Список студентов
+        self.student_list = ttk.Treeview(left_frame, columns=("Фамилия", "Имя", "Отчество", "Рег.номер"),
+                                         show="headings", height=25)
+        self.student_list.heading("Фамилия", text="Фамилия")
+        self.student_list.heading("Имя", text="Имя")
+        self.student_list.heading("Отчество", text="Отчество")
+        self.student_list.heading("Рег.номер", text="Рег.номер")
+        self.student_list.column("Фамилия", width=120)
+        self.student_list.column("Имя", width=100)
+        self.student_list.column("Отчество", width=120)
+        self.student_list.column("Рег.номер", width=100)
+        self.student_list.pack(fill=tk.BOTH, expand=True)
+        
+        # ===== ПРАВАЯ ЧАСТЬ =====
+        right_frame = tk.Frame(match_win)
+        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        tk.Label(right_frame, text="Учебные заведения", font=("Arial", 12, "bold")).pack()
+        
+        # Фильтр по региону
+        tk.Label(right_frame, text="Код региона:").pack()
+        self.region_filter = tk.Entry(right_frame, width=30)
+        self.region_filter.pack(pady=2)
+        self.region_filter.bind("<KeyRelease>", lambda e: self.refresh_schools())
+        
+        # Фильтр по названию школы
+        tk.Label(right_frame, text="Название школы:").pack()
+        self.school_filter = tk.Entry(right_frame, width=30)
+        self.school_filter.pack(pady=2)
+        self.school_filter.bind("<KeyRelease>", lambda e: self.refresh_schools())
+        
+        # Список школ
+        self.school_list = ttk.Treeview(right_frame, columns=("ID", "Название", "Регион", "Адрес"),
+                                        show="headings", height=25)
+        self.school_list.heading("ID", text="ID")
+        self.school_list.heading("Название", text="Краткое название")
+        self.school_list.heading("Регион", text="Регион")
+        self.school_list.heading("Адрес", text="Адрес")
+        self.school_list.column("ID", width=50)
+        self.school_list.column("Название", width=200)
+        self.school_list.column("Регион", width=120)
+        self.school_list.column("Адрес", width=150)
+        self.school_list.pack(fill=tk.BOTH, expand=True)
+        
+        # ===== КНОПКА ПРИВЯЗКИ =====
+        btn_frame = tk.Frame(match_win)
+        btn_frame.pack(side=tk.BOTTOM, pady=10)
+        
+        tk.Button(btn_frame, text="Привязать выделенное заведение к выделенному студенту",
+                  command=self.bind_school_to_student, bg="#c8e6c9", width=50, height=2).pack()
+        
+        self.status_match = tk.Label(match_win, text="", font=("Arial", 10))
+        self.status_match.pack(side=tk.BOTTOM)
+        
+        # Загружаем данные
+        self.refresh_students()
+        self.refresh_schools()
+    
+    def refresh_students(self):
+        """Обновляет список студентов"""
+        for item in self.student_list.get_children():
+            self.student_list.delete(item)
+        
+        filter_text = self.filter_entry.get().strip()
+        
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            
+            query = """
+                SELECT p.surname, p.name, p.patronymic, e.reg_number, p.id
+                FROM people p
+                LEFT JOIN enrollments e ON p.id = e.person_id
+                WHERE p.id > 10
+            """
+            params = []
+            if filter_text:
+                query += " AND (p.surname LIKE %s OR p.name LIKE %s)"
+                params.extend([f"%{filter_text}%", f"%{filter_text}%"])
+            
+            query += " ORDER BY p.surname LIMIT 500"
+            
+            cursor.execute(query, params)
+            for row in cursor.fetchall():
+                self.student_list.insert("", tk.END, values=(row[0], row[1], row[2], row[3]),
+                                         iid=str(row[4]))  # iid = person_id
+            
+            cursor.close()
+            conn.close()
+        except Exception:
+            pass
+    
+    def refresh_schools(self):
+        """Обновляет список школ с фильтрами и нечётким поиском"""
+        for item in self.school_list.get_children():
+            self.school_list.delete(item)
+        
+        region_text = self.region_filter.get().strip()
+        school_text = self.school_filter.get().strip()
+        
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            
+            query = """
+                SELECT ec.id, ec.edu_org_short_name, r.name, ec.edu_org_address
+                FROM educational_certificate ec
+                JOIN regions r ON ec.region_id = r.id
+                WHERE ec.status_name = 'Действующее'
+            """
+            params = []
+            
+            if region_text:
+                query += " AND r.code LIKE %s"
+                params.append(f"%{region_text}%")
+            
+            cursor.execute(query, params)
+            all_schools = cursor.fetchall()
+            
+            cursor.close()
+            conn.close()
+            
+            # Если есть текст для поиска — применяем нечёткое сопоставление
+            if school_text:
+                from difflib import SequenceMatcher
+                import re
+                
+                def clean(s):
+                    s = s.lower().strip()
+                    s = re.sub(r'[«»""]', '', s)
+                    s = re.sub(r'\s+', ' ', s)
+                    return s
+                
+                scored = []
+                clean_input = clean(school_text)
+                for school in all_schools:
+                    clean_short = clean(school[1] or '')
+                    clean_full = clean(school[3] or '')
+                    score = max(
+                        SequenceMatcher(None, clean_input, clean_short).ratio(),
+                        SequenceMatcher(None, clean_input, clean_full).ratio()
+                    )
+                    if score > 0.2:
+                        scored.append((score, school))
+                
+                scored.sort(key=lambda x: x[0], reverse=True)
+                all_schools = [s[1] for s in scored[:50]]
+            
+            for school in all_schools:
+                self.school_list.insert("", tk.END, values=(school[0], school[1], school[2], school[3]),
+                                        iid=str(school[0]))
+            
+        except Exception:
+            pass
+    
+    def bind_school_to_student(self):
+        """Привязывает студента к учебному заведению"""
+        student_sel = self.student_list.selection()
+        school_sel = self.school_list.selection()
+        
+        if not student_sel:
+            self.status_match.config(text="Выберите студента из левого списка", fg="red")
+            return
+        if not school_sel:
+            self.status_match.config(text="Выберите учебное заведение из правого списка", fg="red")
+            return
+        
+        person_id = student_sel[0]
+        school_id = school_sel[0]
+        
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            
+            # Получаем данные студента для заполнения полей
+            cursor.execute("""
+                SELECT birth_date FROM people WHERE id = %s
+            """, (person_id,))
+            person_row = cursor.fetchone()
+            birth_date = person_row[0] if person_row else None
+            
+            # Проверяем, есть ли уже связь
+            cursor.execute("""
+                SELECT id FROM person_certificates
+                WHERE person_id = %s AND edu_certificate_id = %s
+            """, (person_id, school_id))
+            
+            if cursor.fetchone():
+                # Обновляем существующую связь
+                cursor.execute("""
+                    UPDATE person_certificates
+                    SET certificate_type_of_education = 'Аттестат о среднем общем образовании',
+                        certificate_date = %s,
+                        is_original = 0,
+                        updated_at = NOW()
+                    WHERE person_id = %s AND edu_certificate_id = %s
+                """, (birth_date, person_id, school_id))
+                msg = "Связь обновлена"
+            else:
+                # Создаём новую связь с заполнением всех полей
+                cursor.execute("""
+                    INSERT INTO person_certificates
+                    (person_id, edu_certificate_id, certificate_type_of_education,
+                     certificate_date, is_original, created_at, updated_at)
+                    VALUES (%s, %s, 'Аттестат о среднем общем образовании',
+                            %s, 0, NOW(), NOW())
+                """, (person_id, school_id, birth_date))
+                msg = "Связь создана"
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            student_name = f"{self.student_list.item(student_sel[0], 'values')[0]} {self.student_list.item(student_sel[0], 'values')[1]}"
+            school_name = self.school_list.item(school_sel[0], "values")[1]
+            
+            self.status_match.config(
+                text=f"{msg}: {student_name} → {school_name}", fg="green")
+            
+        except Exception as e:
+            self.status_match.config(text=f"Ошибка: {e}", fg="red")
 
 # ==================== ЗАПУСК ====================
 
